@@ -9,6 +9,7 @@ extras_require = {
     'test': [
         "pytest==3.3.2",
         "pytest-xdist",
+        "pytest-asyncio==0.8.0",
         "tox>=2.9.1,<3",
     ],
     'lint': [
@@ -60,8 +61,8 @@ setup(
         'License :: OSI Approved :: MIT License',
         'Natural Language :: English',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: Implementation :: PyPy',
     ],
 )
