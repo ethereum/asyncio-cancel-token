@@ -131,7 +131,7 @@ Within the boundaries of your own application it is easy to pass cancel tokens
 around as needed.  However, you will often need cancellations to apply to async
 calls to apis which do not support the cancel token API.
 
-The :meth:`cancel_token.CancelToken.wait_for` function can be used to enforce
+The :meth:`cancel_token.CancelToken.cancellable_wait` function can be used to enforce
 cancellations and timeouts on other async APIs.  It expects any number of
 awaitables as positional arguments as well as an optional ``timeout`` as a
 keyword argument.
@@ -145,5 +145,5 @@ keyword argument.
     >>> async def some_3rd_party_api():
     ...     await asyncio.sleep(10)
     ...
-    >>> loop.run_until_complete(token.wait_for(some_3rd_party_api(), timeout=0.1))
+    >>> loop.run_until_complete(token.cancellable_wait(some_3rd_party_api(), timeout=0.1))
     TimeoutError

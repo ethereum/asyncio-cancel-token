@@ -110,7 +110,7 @@ class CancelToken:
         fut.add_done_callback(cancel_not_done)
         await fut
 
-    async def wait_for(self, *awaitables: Awaitable[_R], timeout: float = None) -> _R:
+    async def cancellable_wait(self, *awaitables: Awaitable[_R], timeout: float = None) -> _R:
         """
         Wait for the first awaitable to complete, unless we timeout or the
         token is triggered.
