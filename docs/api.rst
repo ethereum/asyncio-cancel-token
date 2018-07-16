@@ -4,14 +4,14 @@ API
 Cancel Token
 ------------
 
-.. autoclass:: cancel_token.CancelToken
+.. autoclass:: cancel_token.token.CancelToken
   :members:
 
 Exceptions
 ----------
 
-.. autoclass:: cancel_token.EventLoopMismatch
+.. autoclass:: cancel_token.exceptions.EventLoopMismatch
   :members:
 
-.. autoclass:: cancel_token.OperationCancelled
+.. autoclass:: cancel_token.exceptions.OperationCancelled
   :members:
