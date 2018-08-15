@@ -1,7 +1,8 @@
 import asyncio
-from typing import (
+from typing import (  # noqa: F401
     Any,
     Awaitable,
+    List,
     Sequence,
     TypeVar,
     cast,
@@ -12,7 +13,7 @@ from .exceptions import (
     OperationCancelled,
 )
 
-_R = TypeVar('R')
+_R = TypeVar('_R')
 
 
 class CancelToken:
@@ -23,7 +24,7 @@ class CancelToken:
         self._loop = loop
 
     @property
-    def loop(self):
+    def loop(self) -> asyncio.AbstractEventLoop:
         """
         Return the `loop` that this token is bound to.
         """
