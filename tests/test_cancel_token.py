@@ -29,10 +29,12 @@ def test_token_chain_trigger_chain():
     token = CancelToken('token')
     token2 = CancelToken('token2')
     token3 = CancelToken('token3')
-    chain = token.chain(token2).chain(token3)
+    intermediate_chain = token.chain(token2)
+    chain = intermediate_chain.chain(token3)
     assert not chain.triggered
     chain.trigger()
     assert chain.triggered
+    assert not intermediate_chain.triggered
     assert chain.triggered_token == chain
     assert not token.triggered
     assert not token2.triggered
@@ -54,22 +56,28 @@ def test_token_chain_trigger_middle():
     token = CancelToken('token')
     token2 = CancelToken('token2')
     token3 = CancelToken('token3')
-    chain = token.chain(token2).chain(token3)
+    intermediate_chain = token.chain(token2)
+    chain = intermediate_chain.chain(token3)
     assert not chain.triggered
     token2.trigger()
     assert chain.triggered
+    assert intermediate_chain.triggered
     assert chain.triggered_token == token2
+    assert not token3.triggered
+    assert not token.triggered
 
 
 def test_token_chain_trigger_last():
     token = CancelToken('token')
     token2 = CancelToken('token2')
     token3 = CancelToken('token3')
-    chain = token.chain(token2).chain(token3)
+    intermediate_chain = token.chain(token2)
+    chain = intermediate_chain.chain(token3)
     assert not chain.triggered
     token3.trigger()
     assert chain.triggered
     assert chain.triggered_token == token3
+    assert not intermediate_chain.triggered
 
 
 @pytest.mark.asyncio
