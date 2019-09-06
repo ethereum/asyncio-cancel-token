@@ -93,7 +93,7 @@ async def test_wait_cancel_pending_tasks_on_completion(event_loop):
 
 
 @pytest.mark.asyncio
-async def test_wait_cancel_pending_tasks_on_cancellation(event_loop):
+async def test_wait_cancel_pending_tasks_on_cancellation():
     """Test that cancelling a pending CancelToken.wait() coroutine doesn't leave .wait()
     coroutines for any chained tokens behind.
     """
@@ -127,7 +127,7 @@ async def test_cancellable_wait_future_exception(event_loop):
 
 
 @pytest.mark.asyncio
-async def test_cancellable_wait_cancels_subtasks_when_cancelled(event_loop):
+async def test_cancellable_wait_cancels_subtasks_when_cancelled():
     token = CancelToken('')
     future = asyncio.ensure_future(token.cancellable_wait(asyncio.sleep(2)))
     with pytest.raises(asyncio.TimeoutError):
@@ -150,11 +150,132 @@ async def test_cancellable_wait_timeout():
 
 
 @pytest.mark.asyncio
-async def test_cancellable_wait_operation_cancelled(event_loop):
+async def test_cancellable_wait_operation_cancelled():
     token = CancelToken('token')
     token.trigger()
     with pytest.raises(OperationCancelled):
         await token.cancellable_wait(asyncio.sleep(0.02))
+    await assert_only_current_task_not_done()
+
+
+@pytest.mark.asyncio
+async def test_finished_task_with_exceptions_is_raised_on_cancellation():
+    token = CancelToken('token')
+
+    ready = asyncio.Event()
+
+    async def _signal_then_raise():
+        ready.set()
+        raise ValueError("raising from _signal_then_raise")
+
+    # schedule in the background
+    task = asyncio.ensure_future(token.cancellable_wait(_signal_then_raise()))
+    # wait until the coro is running and we know it's raised an error
+    await ready.wait()
+    # trigger the cancel token
+    token.trigger()
+
+    with pytest.raises(ValueError, match="raising from _signal_then_raise"):
+        await task
+    await assert_only_current_task_not_done()
+
+
+@pytest.mark.asyncio
+async def test_cancelling_token_wait_cleans_up_chained_token_waits():
+    parent = CancelToken('parent')
+    child = parent.chain(CancelToken('child'))
+
+    # this schedules both the child's `wait()` and the parent's `wait()`
+    fut = asyncio.ensure_future(child.wait())
+    # yield for a moment to let them spin up.
+    await asyncio.sleep(0.01)
+
+    # ensure that there are some not-done tasks
+    with pytest.raises(AssertionError):
+        await assert_only_current_task_not_done()
+
+    # cancel the wait (which should also properly cancel the parent wait)
+    fut.cancel()
+    try:
+        await fut
+    except asyncio.CancelledError:
+        pass
+    await assert_only_current_task_not_done()
+
+
+@pytest.mark.asyncio
+async def test_token_wait_finishing_cleans_up_chained_token_waits():
+    parent = CancelToken('parent')
+    child = parent.chain(CancelToken('child'))
+
+    # this schedules both the child's `wait()` and the parent's `wait()`
+    fut = asyncio.ensure_future(child.wait())
+    # yield for a moment to let them spin up.
+    await asyncio.sleep(0.01)
+
+    # ensure that there are some not-done tasks
+    with pytest.raises(AssertionError):
+        await assert_only_current_task_not_done()
+
+    child.trigger()
+
+    await asyncio.wait_for(fut, timeout=0.01)
+
+    await assert_only_current_task_not_done()
+
+
+@pytest.mark.asyncio
+async def test_awaitables_are_cancelled_and_cleaned_up_on_outer_cancellation():
+    token = CancelToken('token')
+
+    ready = asyncio.Event()
+    got_cancelation = asyncio.Event()
+
+    async def _signal_then_sleep():
+        ready.set()
+        try:
+            await asyncio.sleep(10)
+        except asyncio.CancelledError:
+            got_cancelation.set()
+            raise
+
+    fut = asyncio.ensure_future(_signal_then_sleep())
+
+    task = asyncio.ensure_future(token.cancellable_wait(fut))
+
+    # wait till we know the coro is running
+    await ready.wait()
+
+    # cancel the task
+    task.cancel()
+
+    try:
+        await task
+    except asyncio.CancelledError:
+        pass
+
+    # ensure that the task was indeed cancelled.
+    await asyncio.wait_for(got_cancelation.wait(), timeout=0.01)
+    await assert_only_current_task_not_done()
+
+
+@pytest.mark.asyncio
+async def test_other_awaitables_are_cancelled_if_one_finishes():
+    token = CancelToken('token')
+
+    short_fut = asyncio.ensure_future(asyncio.sleep(0))
+    long_fut = asyncio.ensure_future(asyncio.sleep(10))
+
+    await token.cancellable_wait(short_fut, long_fut)
+
+    # they should both be done
+    assert short_fut.done()
+    assert long_fut.done()
+
+    # only the long one should be cancelled
+    assert not short_fut.cancelled()
+    assert long_fut.cancelled()
+
     await assert_only_current_task_not_done()
 
 
