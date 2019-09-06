@@ -40,7 +40,7 @@ extras_require['dev'] = (
 setup(
     name='asyncio-cancel-token',
     # *IMPORTANT*: Don't manually change the version here. Use `make bump`, as described in readme
-    version='0.1.0-alpha.2',
+    version='0.2.0',
     description="""asyncio-cancel-token: Task cancellation pattern for asyncio applications""",
     long_description_markdown_filename='README.md',
     author='Guilherme Salgado',
