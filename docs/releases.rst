@@ -1,8 +1,8 @@
 Release Notes
 =============
 
-v0.2.0-alpha.1 (unreleased)
---------------
+v0.2.0
+------
 
 - Change to raise ``asyncio.TimeoutError`` instead of the ``TimeoutError`` from built-ins
 
