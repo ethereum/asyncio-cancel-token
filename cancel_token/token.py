@@ -95,21 +95,29 @@ class CancelToken:
         for token in self._chain:
             futures.append(asyncio.ensure_future(token.wait(), loop=self.loop))
 
-        def cancel_not_done(fut: 'asyncio.Future[None]') -> None:
+        try:
+            done, pending = await asyncio.wait(
+                futures,
+                return_when=asyncio.FIRST_COMPLETED,
+                loop=self.loop,
+            )
+        except asyncio.CancelledError as err:
             for future in futures:
-                if not future.done():
-                    future.cancel()
-
-        async def _wait_for_first(futures: Sequence[Awaitable[Any]]) -> None:
-            for future in asyncio.as_completed(futures):
-                # We don't need to catch CancelledError here (and cancel not done futures)
-                # because our callback (above) takes care of that.
-                await cast(Awaitable[Any], future)
-                return
-
-        fut = asyncio.ensure_future(_wait_for_first(futures), loop=self.loop)
-        fut.add_done_callback(cancel_not_done)
-        await fut
+                future.cancel()
+            for future in futures:
+                try:
+                    await future
+                except asyncio.CancelledError:
+                    pass
+            raise err
+        else:
+            for future in pending:
+                future.cancel()
+            for future in pending:
+                try:
+                    await future
+                except asyncio.CancelledError:
+                    pass
 
     async def cancellable_wait(self, *awaitables: Awaitable[_R], timeout: float = None) -> _R:
         """
@@ -132,21 +140,32 @@ class CancelToken:
                 return_when=asyncio.FIRST_COMPLETED,
                 loop=self.loop,
             )
-        except asyncio.futures.CancelledError:
-            # Since we use return_when=asyncio.FIRST_COMPLETED above, we can be sure none of our
-            # futures will be done here, so we don't need to check if any is done before cancelling.
+        except asyncio.CancelledError as err:
             for future in futures:
                 future.cancel()
-            raise
-        for task in pending:
-            task.cancel()
+            for future in futures:
+                try:
+                    await future
+                except asyncio.CancelledError:
+                    pass
+            raise err
+        else:
+            for future in pending:
+                future.cancel()
+            for future in pending:
+                try:
+                    await future
+                except asyncio.CancelledError:
+                    pass
+
         if not done:
-            raise TimeoutError()
+            raise asyncio.TimeoutError()
+
         if self.triggered_token is not None:
             # We've been asked to cancel so we don't care about our future, but we must
             # consume its exception or else asyncio will emit warnings.
             for task in done:
-                task.exception()
+                task.result()
             raise OperationCancelled(
                 "Cancellation requested by {} token".format(self.triggered_token)
             )

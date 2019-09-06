@@ -136,14 +136,15 @@ async def test_cancellable_wait_cancels_subtasks_when_cancelled(event_loop):
         # (https://docs.python.org/3/library/asyncio-task.html#asyncio.Task.cancel), so we need
         # the sleep below before we check that the task is actually cancelled.
         await asyncio.wait_for(future, timeout=0.01)
-    await asyncio.sleep(0)
+    with pytest.raises(asyncio.CancelledError):
+        await asyncio.wait_for(future, timeout=0.01)
     assert future.cancelled()
     await assert_only_current_task_not_done()
 
 
 @pytest.mark.asyncio
 async def test_cancellable_wait_timeout():
-    with pytest.raises(TimeoutError):
+    with pytest.raises(asyncio.TimeoutError):
         await CancelToken('token').cancellable_wait(asyncio.sleep(0.02), timeout=0.01)
     await assert_only_current_task_not_done()
 
