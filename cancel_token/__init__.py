@@ -1,6 +1,6 @@
 from .exceptions import (  # noqa: F401
-    OperationCancelled,
     EventLoopMismatch,
+    OperationCancelled,
 )
 from .token import (  # noqa: F401
     CancelToken,

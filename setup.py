@@ -15,7 +15,7 @@ extras_require = {
     'lint': [
         "flake8==3.4.1",
         "isort>=4.2.15,<5",
-        "mypy==0.620",
+        "mypy==0.720",
     ],
     'doc': [
         "Sphinx>=1.6.5,<2",
@@ -56,6 +56,7 @@ setup(
     zip_safe=False,
     keywords='ethereum',
     packages=find_packages(exclude=["tests", "tests.*"]),
+    package_data={'cancel_token': ['py.typed']},
     classifiers=[
         'Development Status :: 3 - Alpha',
         'Intended Audience :: Developers',
