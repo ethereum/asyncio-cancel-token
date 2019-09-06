@@ -102,6 +102,9 @@ class CancelToken:
                 loop=self.loop,
             )
         except asyncio.CancelledError as err:
+            # Since we use return_when=asyncio.FIRST_COMPLETED above, we can
+            # be sure none of our futures will be done here, so we don't need
+            # to check if any is done before cancelling.
             for future in futures:
                 future.cancel()
             for future in futures:
@@ -141,6 +144,9 @@ class CancelToken:
                 loop=self.loop,
             )
         except asyncio.CancelledError as err:
+            # Since we use return_when=asyncio.FIRST_COMPLETED above, we can
+            # be sure none of our futures will be done here, so we don't need
+            # to check if any is done before cancelling.
             for future in futures:
                 future.cancel()
             for future in futures:
