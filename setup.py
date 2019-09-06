@@ -7,15 +7,15 @@ from setuptools import (
 
 extras_require = {
     'test': [
-        "pytest==3.3.2",
-        "pytest-xdist",
-        "pytest-asyncio==0.8.0",
-        "tox>=2.9.1,<3",
+        "pytest>=5.1,<5.2",
+        "pytest-xdist>=1.22,<1.23",
+        "pytest-asyncio==0.10.0",
+        "tox>=3.14,<4",
     ],
     'lint': [
         "flake8==3.4.1",
         "isort>=4.2.15,<5",
-        "mypy==0.620",
+        "mypy==0.720",
     ],
     'doc': [
         "Sphinx>=1.6.5,<2",
@@ -56,6 +56,7 @@ setup(
     zip_safe=False,
     keywords='ethereum',
     packages=find_packages(exclude=["tests", "tests.*"]),
+    package_data={'cancel_token': ['py.typed']},
     classifiers=[
         'Development Status :: 3 - Alpha',
         'Intended Audience :: Developers',
